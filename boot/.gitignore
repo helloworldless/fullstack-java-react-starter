@@ -1,0 +1,2 @@
+# Bundled webapp should not be commited
+src/main/resources/static/

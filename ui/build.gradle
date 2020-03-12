@@ -1,0 +1,30 @@
+plugins {
+    id "com.moowork.node" version "1.3.1"
+    id "java"
+}
+
+def generatedResources = "$buildDir"
+
+// https://docs.gradle.org/current/userguide/multi_project_builds.html#sec:depending_on_output_of_another_project
+sourceSets {
+    main {
+        output.dir(generatedResources, builtBy: 'packageReactApp')
+    }
+}
+
+task buildReactApp(type: NodeTask, dependsOn: 'yarn') {
+    script = project.file('.gradle/yarn/yarn-latest/bin/yarn')
+    args = ['build']
+}
+
+task cleanReactBuild(type: Delete) {
+    delete "$buildDir"
+}
+
+task packageReactApp(type: Copy) {
+    from "$buildDir"
+    into "$buildDir/../../boot/src/main/resources/static"
+}
+
+buildReactApp.dependsOn(cleanReactBuild)
+packageReactApp.dependsOn(buildReactApp)
