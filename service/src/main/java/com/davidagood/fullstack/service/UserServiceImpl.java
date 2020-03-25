@@ -1,9 +1,8 @@
 package com.davidagood.fullstack.service;
 
 import com.davidagood.fullstack.User;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
+import org.springframework.stereotype.Service;
 
 @Service
 class UserServiceImpl implements UserService {

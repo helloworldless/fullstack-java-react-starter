@@ -13,7 +13,7 @@
 1. Run `yarn` to install dependencies
 1. Run `yarn start`
 1. Starts at http://localhost:3000
-1. API calls are proxied to http://localhost:8080 (see `proxy` property in `package.json`)
+1. API calls, e.g. `/api/user`, are proxied to http://localhost:8080 (see `proxy` property in `package.json`)
 
 ## Building Executable JAR
 

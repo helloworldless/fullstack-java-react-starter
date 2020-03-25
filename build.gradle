@@ -43,8 +43,10 @@ configure(javaProjects) {
     }
 
     checkstyle {
-        toolVersion "7.6.1"
+        toolVersion "8.29" //"7.6.1"
         configFile = rootProject.file('checkstyle.xml')
+        ignoreFailures = false
+        maxWarnings = 0
     }
 
     tasks.withType(Checkstyle) {

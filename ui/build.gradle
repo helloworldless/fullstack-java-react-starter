@@ -1,30 +1,68 @@
+// Based on https://github.com/xword/java-npm-gradle-integration-example
 plugins {
+    id "base"
     id "com.moowork.node" version "1.3.1"
-    id "java"
 }
 
-def generatedResources = "$buildDir"
+node {
+    version = '12.16.1'
+    npmVersion = '6.13.6'
+    yarnVersion = '1.22.0'
+}
 
-// https://docs.gradle.org/current/userguide/multi_project_builds.html#sec:depending_on_output_of_another_project
-sourceSets {
-    main {
-        output.dir(generatedResources, builtBy: 'packageReactApp')
+yarn_build {
+    // make sure the build task is executed only when appropriate files change
+    inputs.files fileTree('public')
+    inputs.files fileTree('src')
+    inputs.file 'package.json'
+    inputs.file 'yarn.lock'
+
+    outputs.dir 'build'
+}
+
+// package output of the build into JAR file
+task bundleWebApp(type: Zip) {
+    dependsOn yarn_build
+    baseName 'ui'
+    extension 'jar'
+    destinationDir file("${projectDir}/build_webapp")
+    from('build') {
+        // optional path under which output will be visible in Java classpath, e.g. static resources path
+        into 'static'
     }
 }
 
-task buildReactApp(type: NodeTask, dependsOn: 'yarn') {
-    script = project.file('.gradle/yarn/yarn-latest/bin/yarn')
-    args = ['build']
+// declare a dedicated scope for publishing the packaged JAR
+configurations {
+    webAppResources
 }
 
-task cleanReactBuild(type: Delete) {
-    delete "$buildDir"
+configurations.default.extendsFrom(configurations.webAppResources)
+
+// expose the artifact created by the packaging task
+artifacts {
+    webAppResources(bundleWebApp.archivePath) {
+        builtBy bundleWebApp
+        type 'jar'
+    }
 }
 
-task packageReactApp(type: Copy) {
-    from "$buildDir"
-    into "$buildDir/../../boot/src/main/resources/static"
+assemble.dependsOn bundleWebApp
+
+task test(type: YarnTask) {
+    dependsOn assemble
+    // force Jest test runner to execute tests once and finish the process instead of starting watch mode
+    environment CI: 'true'
+    args = ['test']
+
+    inputs.files fileTree('src')
+    inputs.file 'package.json'
+    inputs.file 'yarn.lock'
 }
 
-buildReactApp.dependsOn(cleanReactBuild)
-packageReactApp.dependsOn(buildReactApp)
+check.dependsOn test
+
+clean {
+    delete bundleWebApp.archivePath
+}
+
